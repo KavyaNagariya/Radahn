@@ -30,37 +30,47 @@ def main():
         schema_write_file],
     )
     messages = [types.Content(role="user", parts=[types.Part(text=user_prompt)])]
+    config = types.GenerateContentConfig(tools=[available_functions],system_instruction=system_prompt)
     client = genai.Client(api_key=api_key)
-    response = client.models.generate_content(
-        model='gemini-2.5-flash', contents=messages,
-        config=types.GenerateContentConfig(tools=[available_functions],system_instruction=system_prompt), 
-    )
-    
-    if response is None or response.usage_metadata is None:
-        print("Response is malformed.")
-        return
-    
-    if verbose_flag:
-        print(f"User prompt: {user_prompt}")
-        print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-        print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
+    for _ in range(1, 21):
+        response = client.models.generate_content(
+            model='gemini-2.5-flash', contents=messages,
+            config=config, 
+        )
+        
+        if response is None or response.usage_metadata is None:
+            print("Response is malformed.")
+            return
+        
+        if verbose_flag:
+            print(f"User prompt: {user_prompt}")
+            print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
+            print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
 
-    if response.function_calls:
-        for function_call in response.function_calls:
-            try:
-                function_call_result = call_function(function_call, verbose_flag)
-                function_response = function_call_result.parts[0].function_response
-                if function_response is None:
-                    raise Exception('No response object found')
-                if function_response.response is None:
-                    raise Exception('No response found')
-                print(f"-> {function_response.response['result']}")
-            except Exception as e:
-                print(f"An exception occured: {e}")       
-    else:
-        print(response.text)
-    
+        if response.candidates:
+            for candidate in response.candidates:
+                if candidate is None or candidate.content is None:
+                    continue
+                messages.append(candidate.content)
+
+        if response.function_calls:
+            for function_call in response.function_calls:
+                try:
+                    function_call_result = call_function(function_call, verbose_flag)
+                    function_response = function_call_result.parts[0].function_response
+                    if function_response is None:
+                        raise Exception('No response object found')
+                    if function_response.response is None:
+                        raise Exception('No response found')
+                    messages.append(function_call_result)
+                except Exception as e:
+                    print(f"An exception occured: {e}")       
+        else:
+            if _ == 20:
+                print("Can't provide the given result for the provided statement")
+                sys.exit(1)
+            print(response.text)
+            return
+        
     
 main()
-
-
