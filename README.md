@@ -72,6 +72,4 @@ python main.py "Analyze the calculator project and run its tests"
 - Path traversal attacks are prevented through validation
 - Maximum file read size is limited to 10,000 characters
 
-## License
 
-[Add your license here]
