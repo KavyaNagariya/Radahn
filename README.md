@@ -64,7 +64,7 @@ python main.py "Analyze the calculator project and run its tests"
 ## Dependencies
 
 - `google-genai==1.12.1` - Google's Generative AI client
-- `python-dotenv==1.1.0` - Environment variable management
+- `python-dotenv==1.2.2` - Environment variable management
 
 ## Security
 
